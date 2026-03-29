@@ -60,7 +60,7 @@ async function sendWithResend(args: {
 export async function sendContactInquiryEmails(payload: ContactInquiryPayload): Promise<EmailDispatchResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const receiver = process.env.CONTACT_RECEIVER_EMAIL || "hello@kaklasanecrew.com";
-  const from = process.env.MAIL_FROM || "Kakla Sane & Crew <noreply@kaklasanecrew.com>";
+  const from = process.env.MAIL_FROM || "Kakla Sane & Crew <onboarding@resend.dev>";
 
   if (!apiKey) {
     return {
@@ -83,7 +83,14 @@ export async function sendContactInquiryEmails(payload: ContactInquiryPayload): 
         <p>${payload.message.replace(/\n/g, "<br />")}</p>
       `
     });
+  } catch (error) {
+    return {
+      delivered: false,
+      reason: error instanceof Error ? error.message : "Unable to dispatch contact emails."
+    };
+  }
 
+  try {
     await sendWithResend({
       apiKey,
       from,
@@ -98,12 +105,21 @@ export async function sendContactInquiryEmails(payload: ContactInquiryPayload): 
         <p>Warm regards,<br/>Kakla Sane & Crew Team</p>
       `
     });
-
     return { delivered: true };
   } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unable to dispatch client confirmation email.";
+    const isResendTestingRestriction = reason.includes("You can only send testing emails to your own email address");
+
+    if (isResendTestingRestriction) {
+      return {
+        delivered: true,
+        reason: "Client confirmation email is blocked in Resend testing mode until your sending domain is verified."
+      };
+    }
+
     return {
       delivered: false,
-      reason: error instanceof Error ? error.message : "Unable to dispatch contact emails."
+      reason
     };
   }
 }

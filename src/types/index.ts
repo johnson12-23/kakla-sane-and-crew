@@ -30,3 +30,14 @@ export interface Booking extends BookingInput {
   qrPayload: string;
   createdAt: string;
 }
+
+export interface ContactMessageInput {
+  fullName: string;
+  email: string;
+  message: string;
+}
+
+export interface ContactMessage extends ContactMessageInput {
+  id: string;
+  createdAt: string;
+}

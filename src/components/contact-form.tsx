@@ -39,7 +39,7 @@ export function ContactForm() {
 
       setFeedback({
         type: "success",
-        message: data.message || "Message sent successfully. A confirmation email has been sent to your inbox."
+        message: data.message || "Message sent successfully. We have received your request."
       });
       setForm(initialState);
     } catch (error) {

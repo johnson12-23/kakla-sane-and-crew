@@ -14,8 +14,17 @@ interface BookingRow {
   createdAt: string;
 }
 
+interface ContactMessageRow {
+  id: string;
+  fullName: string;
+  email: string;
+  message: string;
+  createdAt: string;
+}
+
 export function AdminDashboard() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
+  const [contactMessages, setContactMessages] = useState<ContactMessageRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [scanInput, setScanInput] = useState("");
   const [scanResult, setScanResult] = useState("");
@@ -23,11 +32,21 @@ export function AdminDashboard() {
   const customers = useMemo(() => bookings.length, [bookings]);
 
   async function loadBookings() {
-    const response = await fetch("/api/admin/bookings", { cache: "no-store" });
-    if (response.ok) {
-      const data = (await response.json()) as BookingRow[];
-      setBookings(data);
+    const [bookingsRes, contactRes] = await Promise.all([
+      fetch("/api/admin/bookings", { cache: "no-store" }),
+      fetch("/api/admin/contact-messages", { cache: "no-store" })
+    ]);
+
+    if (bookingsRes.ok) {
+      const bookingsData = (await bookingsRes.json()) as BookingRow[];
+      setBookings(bookingsData);
     }
+
+    if (contactRes.ok) {
+      const contactData = (await contactRes.json()) as ContactMessageRow[];
+      setContactMessages(contactData);
+    }
+
     setLoading(false);
   }
 
@@ -172,6 +191,28 @@ export function AdminDashboard() {
               </table>
             </div>
           </>
+        )}
+      </div>
+
+      <div className="glass surface-card rounded-lg p-2.5 md:p-3">
+        <h2 className="font-display text-lg">Contact Messages</h2>
+        {loading ? (
+          <div className="loading-shimmer mt-3 h-20 rounded-lg bg-white/10" />
+        ) : contactMessages.length === 0 ? (
+          <p className="mt-3 text-xs text-sand/70">No contact messages yet.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {contactMessages.map((message) => (
+              <article key={message.id} className="rounded-lg border border-white/15 bg-black/25 p-2.5 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold text-sand">{message.fullName}</p>
+                  <p className="text-sand/60">{new Date(message.createdAt).toLocaleString()}</p>
+                </div>
+                <p className="mt-1 text-sand/80">{message.email}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sand/85">{message.message}</p>
+              </article>
+            ))}
+          </div>
         )}
       </div>
     </section>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { sendContactInquiryEmails } from "@/lib/email";
+import { createContactMessage } from "@/lib/contact-store";
 
 const contactSchema = z.object({
   fullName: z.string().min(2),
@@ -13,21 +13,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const payload = contactSchema.parse(body);
 
-    const result = await sendContactInquiryEmails(payload);
-
-    if (!result.delivered) {
-      return NextResponse.json(
-        {
-          message:
-            result.reason ||
-            "Email service is not configured yet. Please set RESEND_API_KEY and CONTACT_RECEIVER_EMAIL."
-        },
-        { status: 503 }
-      );
-    }
+    await createContactMessage(payload);
 
     return NextResponse.json({
-      message: "Message sent successfully. A confirmation email has been sent to your inbox."
+      message: "Message sent successfully. You can view it in the admin panel."
     });
   } catch {
     return NextResponse.json({ message: "Invalid contact form payload." }, { status: 400 });
