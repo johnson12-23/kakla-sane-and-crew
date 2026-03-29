@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { ContactForm } from "@/components/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact | Kakla Sane & Crew"
@@ -26,21 +27,7 @@ export default function ContactPage() {
           </a>
         </div>
 
-        <form className="glass surface-card rounded-2xl p-4 md:p-5">
-          <h2 className="font-display text-xl">Send Us a Message</h2>
-          <div className="mt-3 space-y-2">
-            <input placeholder="Full Name" className="w-full rounded-lg border border-white/20 bg-black/30 px-3 py-2 text-sm" />
-            <input placeholder="Email" className="w-full rounded-lg border border-white/20 bg-black/30 px-3 py-2 text-sm" />
-            <textarea
-              placeholder="Tell us what you need"
-              rows={3}
-              className="w-full rounded-lg border border-white/20 bg-black/30 px-3 py-2 text-sm"
-            />
-            <button type="button" className="gold-button">
-              Submit
-            </button>
-          </div>
-        </form>
+        <ContactForm />
       </div>
     </section>
   );
