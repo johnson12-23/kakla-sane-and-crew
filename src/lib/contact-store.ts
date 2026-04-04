@@ -1,7 +1,8 @@
 import { ContactMessage, ContactMessageInput } from "@/types";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
+import { readCollection, writeCollection } from "@/lib/local-store";
 
-const inMemoryContactMessages: ContactMessage[] = [];
+const CONTACT_MESSAGES_FILE = "contact-messages.json";
 
 function toContactMessage(payload: ContactMessageInput): ContactMessage {
   return {
@@ -26,9 +27,13 @@ export async function createContactMessage(payload: ContactMessageInput) {
     if (!error) {
       return message;
     }
+
+    throw new Error(`Unable to save contact message: ${error.message}`);
   }
 
-  inMemoryContactMessages.push(message);
+  const localMessages = await readCollection<ContactMessage>(CONTACT_MESSAGES_FILE);
+  localMessages.push(message);
+  await writeCollection(CONTACT_MESSAGES_FILE, localMessages);
   return message;
 }
 
@@ -39,16 +44,19 @@ export async function listContactMessages() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      return (data as Array<Record<string, string>>).map((item) => ({
-        id: String(item.id || ""),
-        fullName: String(item.full_name || ""),
-        email: String(item.email || ""),
-        message: String(item.message || ""),
-        createdAt: String(item.created_at || "")
-      }));
+    if (error) {
+      throw new Error(`Unable to load contact messages: ${error.message}`);
     }
+
+    return (data as Array<Record<string, string>>).map((item) => ({
+      id: String(item.id || ""),
+      fullName: String(item.full_name || ""),
+      email: String(item.email || ""),
+      message: String(item.message || ""),
+      createdAt: String(item.created_at || "")
+    }));
   }
 
-  return [...inMemoryContactMessages].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  const localMessages = await readCollection<ContactMessage>(CONTACT_MESSAGES_FILE);
+  return [...localMessages].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
 }

@@ -22,19 +22,33 @@ interface ContactMessageRow {
   createdAt: string;
 }
 
+interface AvailabilityState {
+  totalCapacity: number;
+  sold: number;
+  available: number;
+}
+
 export function AdminDashboard() {
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessageRow[]>([]);
+  const [availability, setAvailability] = useState<AvailabilityState | null>(null);
+  const [slotInput, setSlotInput] = useState("");
+  const [slotNotice, setSlotNotice] = useState("");
+  const [slotSaving, setSlotSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [adminNotice, setAdminNotice] = useState("");
   const [scanInput, setScanInput] = useState("");
   const [scanResult, setScanResult] = useState("");
 
   const customers = useMemo(() => bookings.length, [bookings]);
 
   async function loadBookings() {
-    const [bookingsRes, contactRes] = await Promise.all([
+    setAdminNotice("");
+
+    const [bookingsRes, contactRes, availabilityRes] = await Promise.all([
       fetch("/api/admin/bookings", { cache: "no-store" }),
-      fetch("/api/admin/contact-messages", { cache: "no-store" })
+      fetch("/api/admin/contact-messages", { cache: "no-store" }),
+      fetch("/api/admin/availability", { cache: "no-store" })
     ]);
 
     if (bookingsRes.ok) {
@@ -45,6 +59,39 @@ export function AdminDashboard() {
     if (contactRes.ok) {
       const contactData = (await contactRes.json()) as ContactMessageRow[];
       setContactMessages(contactData);
+    }
+
+    if (availabilityRes.ok) {
+      const availabilityData = (await availabilityRes.json()) as AvailabilityState;
+      setAvailability(availabilityData);
+      setSlotInput(String(availabilityData.totalCapacity));
+    }
+
+    if (!bookingsRes.ok || !contactRes.ok || !availabilityRes.ok) {
+      const messages: string[] = [];
+
+      if (!bookingsRes.ok) {
+        const data = (await bookingsRes.json().catch(() => ({ message: "Unable to load bookings." }))) as {
+          message?: string;
+        };
+        messages.push(data.message || "Unable to load bookings.");
+      }
+
+      if (!contactRes.ok) {
+        const data = (await contactRes.json().catch(() => ({ message: "Unable to load contact messages." }))) as {
+          message?: string;
+        };
+        messages.push(data.message || "Unable to load contact messages.");
+      }
+
+      if (!availabilityRes.ok) {
+        const data = (await availabilityRes.json().catch(() => ({ message: "Unable to load availability." }))) as {
+          message?: string;
+        };
+        messages.push(data.message || "Unable to load availability.");
+      }
+
+      setAdminNotice(messages.join(" "));
     }
 
     setLoading(false);
@@ -86,8 +133,50 @@ export function AdminDashboard() {
     window.location.href = "/api/admin/export";
   }
 
+  async function updateSlots() {
+    const parsed = Number(slotInput);
+
+    if (!Number.isFinite(parsed) || parsed < 1) {
+      setSlotNotice("Enter a valid slot value greater than 0.");
+      return;
+    }
+
+    if (availability && parsed < availability.sold) {
+      setSlotNotice(`Slots cannot be below sold bookings (${availability.sold}).`);
+      return;
+    }
+
+    setSlotSaving(true);
+    setSlotNotice("");
+
+    const response = await fetch("/api/admin/availability", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ totalCapacity: parsed })
+    });
+
+    const data = (await response.json()) as { message?: string; totalCapacity?: number; sold?: number; available?: number };
+
+    if (!response.ok) {
+      setSlotNotice(data.message || "Unable to update slots.");
+      setSlotSaving(false);
+      return;
+    }
+
+    setAvailability({
+      totalCapacity: Number(data.totalCapacity || parsed),
+      sold: Number(data.sold || 0),
+      available: Number(data.available || 0)
+    });
+    setSlotInput(String(Number(data.totalCapacity || parsed)));
+    setSlotNotice("Slots updated successfully.");
+    setSlotSaving(false);
+  }
+
   return (
     <section className="space-y-3 md:space-y-4">
+      {adminNotice && <p className="rounded-lg border border-red-300/30 bg-red-500/10 p-2 text-xs text-red-200">{adminNotice}</p>}
+
       <div className="grid gap-2 md:grid-cols-3">
         <div className="glass surface-card rounded-lg p-2.5 md:p-3">
           <p className="text-xs text-sand/70">Total Bookings</p>
@@ -125,6 +214,37 @@ export function AdminDashboard() {
         <button onClick={exportCsv} className="gold-button w-full text-xs md:w-auto">
           Export Bookings (CSV)
         </button>
+      </div>
+
+      <div className="glass surface-card rounded-lg p-2.5 md:p-3">
+        <h2 className="font-display text-lg">Slot Management</h2>
+        {loading ? (
+          <div className="loading-shimmer mt-3 h-14 rounded-lg bg-white/10" />
+        ) : (
+          <>
+            <div className="mt-2 grid gap-2 text-xs text-sand/80 md:grid-cols-3">
+              <p>Total slots: {availability?.totalCapacity ?? 0}</p>
+              <p>Sold: {availability?.sold ?? 0}</p>
+              <p>Available: {availability?.available ?? 0}</p>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center">
+              <input
+                type="number"
+                min={1}
+                value={slotInput}
+                onChange={(event) => setSlotInput(event.target.value)}
+                className="w-full rounded-lg border border-white/20 bg-black/30 px-3 py-2 text-xs md:max-w-[220px] md:text-sm"
+                placeholder="Set total slots"
+              />
+              <button onClick={updateSlots} className="gold-button w-full text-xs md:w-auto" disabled={slotSaving}>
+                {slotSaving ? "Saving..." : "Update Slots"}
+              </button>
+            </div>
+
+            {slotNotice && <p className="mt-2 text-xs text-sand/80">{slotNotice}</p>}
+          </>
+        )}
       </div>
 
       <div className="glass surface-card rounded-lg p-2.5 md:p-3">

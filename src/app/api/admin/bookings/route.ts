@@ -11,20 +11,27 @@ export async function GET(request: NextRequest) {
     return unauthorized();
   }
 
-  const ticketId = request.nextUrl.searchParams.get("ticketId");
+  try {
+    const ticketId = request.nextUrl.searchParams.get("ticketId");
 
-  if (ticketId) {
-    const ticket = await validateTicket(ticketId);
+    if (ticketId) {
+      const ticket = await validateTicket(ticketId);
 
-    if (!ticket) {
-      return NextResponse.json({ message: "Ticket not found" }, { status: 404 });
+      if (!ticket) {
+        return NextResponse.json({ message: "Ticket not found" }, { status: 404 });
+      }
+
+      return NextResponse.json(ticket);
     }
 
-    return NextResponse.json(ticket);
+    const bookings = await listBookings();
+    return NextResponse.json(bookings);
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Unable to load bookings." },
+      { status: 500 }
+    );
   }
-
-  const bookings = await listBookings();
-  return NextResponse.json(bookings);
 }
 
 export async function PATCH(request: NextRequest) {
@@ -32,19 +39,26 @@ export async function PATCH(request: NextRequest) {
     return unauthorized();
   }
 
-  const body = await request.json();
-  const id = String(body?.id || "");
-  const paymentStatus = body?.paymentStatus;
+  try {
+    const body = await request.json();
+    const id = String(body?.id || "");
+    const paymentStatus = body?.paymentStatus;
 
-  if (!id || (paymentStatus !== "Pending" && paymentStatus !== "Paid")) {
-    return NextResponse.json({ message: "Invalid payload" }, { status: 400 });
+    if (!id || (paymentStatus !== "Pending" && paymentStatus !== "Paid")) {
+      return NextResponse.json({ message: "Invalid payload" }, { status: 400 });
+    }
+
+    const updated = await updateBookingPaymentStatus(id, paymentStatus);
+
+    if (!updated) {
+      return NextResponse.json({ message: "Booking not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Unable to update booking." },
+      { status: 500 }
+    );
   }
-
-  const updated = await updateBookingPaymentStatus(id, paymentStatus);
-
-  if (!updated) {
-    return NextResponse.json({ message: "Booking not found" }, { status: 404 });
-  }
-
-  return NextResponse.json(updated);
 }

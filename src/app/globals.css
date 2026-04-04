@@ -180,6 +180,182 @@ body {
   animation: pageFadeIn 0.2s ease-out both;
 }
 
+.gallery-shell {
+  border: 1px solid rgba(243, 233, 210, 0.18);
+  border-radius: 1.8rem;
+  background:
+    radial-gradient(circle at 80% 10%, rgba(212, 175, 55, 0.2), transparent 34%),
+    radial-gradient(circle at 10% 90%, rgba(15, 61, 46, 0.44), transparent 40%),
+    linear-gradient(160deg, rgba(10, 10, 10, 0.52), rgba(10, 10, 10, 0.28));
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.34);
+}
+
+.gallery-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(6px);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.gallery-orb-a {
+  width: 220px;
+  height: 220px;
+  right: -30px;
+  top: -42px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.8), rgba(212, 175, 55, 0.12));
+  animation: galleryFloatA 12s ease-in-out infinite;
+}
+
+.gallery-orb-b {
+  width: 170px;
+  height: 170px;
+  left: -38px;
+  bottom: 10%;
+  background: radial-gradient(circle, rgba(243, 233, 210, 0.4), rgba(15, 61, 46, 0.1));
+  animation: galleryFloatB 10s ease-in-out infinite;
+}
+
+.gallery-card {
+  position: relative;
+  border-radius: 1.35rem;
+  padding: 0.45rem;
+  background: linear-gradient(155deg, rgba(243, 233, 210, 0.18), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(243, 233, 210, 0.22);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: galleryReveal 0.55s ease-out both;
+  transform-origin: center;
+}
+
+.gallery-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 22px 42px rgba(0, 0, 0, 0.38);
+}
+
+.gallery-filter-chip {
+  border-radius: 999px;
+  border: 1px solid rgba(243, 233, 210, 0.28);
+  background: linear-gradient(140deg, rgba(15, 61, 46, 0.34), rgba(255, 255, 255, 0.08));
+  color: rgba(243, 233, 210, 0.9);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 0.44rem 0.95rem;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+}
+
+.gallery-filter-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(212, 175, 55, 0.68);
+}
+
+.gallery-filter-chip-active {
+  color: #0a0a0a;
+  border-color: rgba(212, 175, 55, 0.9);
+  background: linear-gradient(140deg, rgba(212, 175, 55, 0.92), rgba(243, 233, 210, 0.82));
+}
+
+.gallery-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: radial-gradient(circle at 20% 10%, rgba(212, 175, 55, 0.16), transparent 35%),
+    rgba(5, 8, 7, 0.88);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  animation: lightboxFade 0.25s ease-out both;
+}
+
+.gallery-lightbox-card {
+  width: min(100%, 980px);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(243, 233, 210, 0.3);
+  background: linear-gradient(155deg, rgba(10, 10, 10, 0.9), rgba(15, 61, 46, 0.35));
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+  padding: 0.8rem;
+  position: relative;
+}
+
+.gallery-lightbox-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 3;
+  border-radius: 999px;
+  border: 1px solid rgba(243, 233, 210, 0.45);
+  background: rgba(10, 10, 10, 0.75);
+  color: rgba(243, 233, 210, 0.95);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.4rem 0.75rem;
+  text-transform: uppercase;
+}
+
+@keyframes lightboxFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes galleryReveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes galleryFloatA {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-18px, 14px);
+  }
+}
+
+@keyframes galleryFloatB {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(14px, -16px);
+  }
+}
+
+@media (max-width: 640px) {
+  .gallery-shell {
+    border-radius: 1.25rem;
+  }
+
+  .gallery-orb-a {
+    width: 160px;
+    height: 160px;
+  }
+
+  .gallery-orb-b {
+    width: 130px;
+    height: 130px;
+  }
+
+  .gallery-lightbox-card {
+    padding: 0.55rem;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
 }

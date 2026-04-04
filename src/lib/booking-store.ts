@@ -1,8 +1,19 @@
 import { Booking, BookingInput, PaymentStatus } from "@/types";
 import { randomTicketId } from "@/lib/utils";
 import { hasSupabaseConfig, supabase } from "@/lib/supabase";
+import { TOTAL_TICKET_CAPACITY } from "@/lib/constants";
+import { readCollection, readNumericSetting, writeCollection, writeNumericSetting } from "@/lib/local-store";
 
-const inMemoryBookings: Booking[] = [];
+const BOOKINGS_FILE = "bookings.json";
+const SETTINGS_FILE = "app-settings.json";
+const CAPACITY_SETTING_KEY = "total_ticket_capacity";
+
+export class BookingCapacityError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BookingCapacityError";
+  }
+}
 
 function toBooking(payload: BookingInput, paymentStatus: PaymentStatus = "Pending"): Booking {
   const ticketId = randomTicketId();
@@ -19,6 +30,14 @@ function toBooking(payload: BookingInput, paymentStatus: PaymentStatus = "Pendin
 }
 
 export async function createBooking(payload: BookingInput) {
+  const availability = await getAvailability();
+
+  if (payload.ticketCount > availability.available) {
+    throw new BookingCapacityError(
+      `Only ${availability.available} slot${availability.available === 1 ? "" : "s"} left. Please reduce ticket quantity.`
+    );
+  }
+
   // Mobile Money bookings are finalized only after client-side PIN confirmation.
   const booking = toBooking(payload, "Paid");
 
@@ -28,9 +47,13 @@ export async function createBooking(payload: BookingInput) {
     if (!error) {
       return booking;
     }
+
+    throw new Error(`Unable to save booking: ${error.message}`);
   }
 
-  inMemoryBookings.push(booking);
+  const localBookings = await readCollection<Booking>(BOOKINGS_FILE);
+  localBookings.push(booking);
+  await writeCollection(BOOKINGS_FILE, localBookings);
   return booking;
 }
 
@@ -41,12 +64,15 @@ export async function listBookings() {
       .select("*")
       .order("createdAt", { ascending: false });
 
-    if (!error && data) {
-      return data as Booking[];
+    if (error) {
+      throw new Error(`Unable to load bookings: ${error.message}`);
     }
+
+    return data as Booking[];
   }
 
-  return [...inMemoryBookings].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  const localBookings = await readCollection<Booking>(BOOKINGS_FILE);
+  return [...localBookings].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
 }
 
 export async function updateBookingPaymentStatus(id: string, paymentStatus: PaymentStatus) {
@@ -58,18 +84,22 @@ export async function updateBookingPaymentStatus(id: string, paymentStatus: Paym
       .select()
       .single();
 
-    if (!error && data) {
-      return data as Booking;
+    if (error) {
+      throw new Error(`Unable to update booking: ${error.message}`);
     }
+
+    return data as Booking;
   }
 
-  const booking = inMemoryBookings.find((item) => item.id === id);
+  const localBookings = await readCollection<Booking>(BOOKINGS_FILE);
+  const booking = localBookings.find((item) => item.id === id);
 
   if (!booking) {
     return null;
   }
 
   booking.paymentStatus = paymentStatus;
+  await writeCollection(BOOKINGS_FILE, localBookings);
   return booking;
 }
 
@@ -78,7 +108,54 @@ export async function validateTicket(ticketId: string) {
   return bookings.find((booking) => booking.ticketId === ticketId) || null;
 }
 
-export async function getAvailability(totalCapacity: number) {
+export async function getConfiguredTotalCapacity() {
+  if (hasSupabaseConfig && supabase) {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", CAPACITY_SETTING_KEY)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Unable to load app settings: ${error.message}`);
+    }
+
+    if (data?.value !== undefined && data?.value !== null) {
+      const parsed = Number(data.value);
+
+      if (Number.isFinite(parsed) && parsed >= 1) {
+        return parsed;
+      }
+    }
+  }
+
+  return readNumericSetting(SETTINGS_FILE, CAPACITY_SETTING_KEY, TOTAL_TICKET_CAPACITY);
+}
+
+export async function setConfiguredTotalCapacity(totalCapacity: number) {
+  const normalized = Math.max(1, Math.floor(Number(totalCapacity)));
+
+  if (hasSupabaseConfig && supabase) {
+    const { error } = await supabase.from("app_settings").upsert(
+      {
+        key: CAPACITY_SETTING_KEY,
+        value: normalized
+      },
+      { onConflict: "key" }
+    );
+
+    if (error) {
+      throw new Error(`Unable to update app settings: ${error.message}`);
+    }
+
+    return normalized;
+  }
+
+  return writeNumericSetting(SETTINGS_FILE, CAPACITY_SETTING_KEY, normalized);
+}
+
+export async function getAvailability() {
+  const totalCapacity = await getConfiguredTotalCapacity();
   const bookings = await listBookings();
   const sold = bookings.reduce((acc, booking) => acc + Number(booking.ticketCount || 0), 0);
   return {

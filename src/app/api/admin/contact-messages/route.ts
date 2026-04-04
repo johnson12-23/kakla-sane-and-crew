@@ -11,6 +11,13 @@ export async function GET() {
     return unauthorized();
   }
 
-  const messages = await listContactMessages();
-  return NextResponse.json(messages);
+  try {
+    const messages = await listContactMessages();
+    return NextResponse.json(messages);
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Unable to load contact messages." },
+      { status: 500 }
+    );
+  }
 }

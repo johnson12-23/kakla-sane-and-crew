@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createBooking, listBookings } from "@/lib/booking-store";
+import { BookingCapacityError, createBooking, listBookings } from "@/lib/booking-store";
 import { generateQRCodeDataUrl } from "@/lib/ticket";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 
@@ -22,8 +22,16 @@ export async function POST(request: NextRequest) {
     await sendBookingConfirmationEmail(booking);
 
     return NextResponse.json({ id: booking.id, ticketId: booking.ticketId });
-  } catch {
-    return NextResponse.json({ message: "Invalid booking payload" }, { status: 400 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ message: "Invalid booking payload" }, { status: 400 });
+    }
+
+    if (error instanceof BookingCapacityError) {
+      return NextResponse.json({ message: error.message }, { status: 409 });
+    }
+
+    return NextResponse.json({ message: "Unable to create booking right now." }, { status: 500 });
   }
 }
 

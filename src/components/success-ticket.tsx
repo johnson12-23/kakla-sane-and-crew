@@ -40,6 +40,7 @@ function isBookingDetails(value: unknown): value is BookingDetails {
 export function SuccessTicket({ bookingId, ticketId }: SuccessTicketProps) {
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [downloadNotice, setDownloadNotice] = useState("");
 
   const statusText = booking?.paymentStatus === "Paid" ? "Seat booked successfully" : "Payment pending";
 
@@ -61,7 +62,7 @@ export function SuccessTicket({ bookingId, ticketId }: SuccessTicketProps) {
     };
   }, [bookingId]);
 
-  const downloadTicket = () => {
+  const downloadTicket = async () => {
     if (!booking) {
       return;
     }
@@ -69,13 +70,47 @@ export function SuccessTicket({ bookingId, ticketId }: SuccessTicketProps) {
     const packageLabel = (booking.packageType || "Unknown").toUpperCase();
     const html = `<!doctype html><html><head><meta charset="utf-8" /><title>${booking.ticketId}</title></head><body style="font-family:Segoe UI,Arial,sans-serif;background:#f3e9d2;padding:24px;"><div style="max-width:560px;margin:auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #ddd;"><h1 style="margin:0;color:#0f3d2e;">Kakla Sane & Crew Trip 2026</h1><p><strong>Ticket ID:</strong> ${booking.ticketId}</p><p><strong>Name:</strong> ${booking.fullName}</p><p><strong>Package:</strong> ${packageLabel}</p><p><strong>Tickets:</strong> ${booking.ticketCount}</p><p><strong>Status:</strong> ${statusText}</p><p>Present this ticket at check-in.</p><img alt="QR" src="${booking.qrCode}" style="width:160px;height:160px;" /></div></body></html>`;
 
-    const blob = new Blob([html], { type: "text/html" });
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const fileName = `${booking.ticketId}.html`;
+    const file = new File([blob], fileName, { type: "text/html;charset=utf-8" });
+
+    try {
+      if (
+        typeof navigator !== "undefined" &&
+        "share" in navigator &&
+        "canShare" in navigator &&
+        navigator.canShare({ files: [file] })
+      ) {
+        await navigator.share({
+          files: [file],
+          title: `${booking.ticketId} Ticket`,
+          text: "Your Kakla Sane & Crew Trip ticket"
+        });
+        setDownloadNotice("Ticket shared successfully.");
+        return;
+      }
+    } catch {
+      setDownloadNotice("Share canceled. You can use the download fallback below.");
+    }
+
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `${booking.ticketId}.html`;
+    anchor.download = fileName;
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(anchor);
+
+    // Mobile fallback when file download is blocked by browser policies.
+    const popup = window.open(url, "_blank", "noopener,noreferrer");
+    if (!popup) {
+      setDownloadNotice("Download started. If your phone blocks downloads, open this ticket and use Share or Save.");
+    } else {
+      setDownloadNotice("Ticket ready. On mobile, use Share or Save from the opened page if download does not start.");
+    }
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 3000);
   };
 
   if (!mounted) {
@@ -110,8 +145,9 @@ export function SuccessTicket({ bookingId, ticketId }: SuccessTicketProps) {
       )}
 
       <button onClick={downloadTicket} className="gold-button mt-3">
-        Download Ticket (PDF style)
+        Download Ticket
       </button>
+      {downloadNotice && <p className="mt-2 text-xs text-sand/80">{downloadNotice}</p>}
     </section>
   );
 }

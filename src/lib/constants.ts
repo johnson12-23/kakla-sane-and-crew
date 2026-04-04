@@ -63,7 +63,7 @@ export const TRIP_PACKAGES: TripPackage[] = [
 export const NAV_ITEMS = [
   { name: "Home", href: "/" },
   { name: "About The Trip", href: "/about" },
-  { name: "Packages / Tickets", href: "/packages" },
+  { name: "FAQ", href: "/faq" },
   { name: "Itinerary", href: "/itinerary" },
   { name: "Gallery", href: "/gallery" },
   { name: "Contact", href: "/contact" }

@@ -11,13 +11,22 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const isAdminRoute = pathname.startsWith("/admin");
 
   useEffect(() => {
+    if (isAdminRoute) {
+      return;
+    }
+
     NAV_ITEMS.forEach((item) => {
       router.prefetch(item.href);
     });
     router.prefetch("/book");
-  }, [router]);
+  }, [isAdminRoute, router]);
+
+  if (isAdminRoute) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/30 backdrop-blur-lg">

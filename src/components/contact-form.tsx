@@ -25,10 +25,15 @@ export function ContactForm() {
     setFeedback(null);
 
     try {
-      const response = await fetch("/api/contact", {
+      const endpoint = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT || "/api/contact";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          fullName: form.fullName,
+          email: form.email,
+          message: form.message
+        })
       });
 
       const data = (await response.json()) as { message?: string };
@@ -39,7 +44,7 @@ export function ContactForm() {
 
       setFeedback({
         type: "success",
-        message: data.message || "Message sent successfully. We have received your request."
+        message: data.message || "Message sent successfully. Our team will get back to you soon."
       });
       setForm(initialState);
     } catch (error) {

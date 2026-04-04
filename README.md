@@ -31,6 +31,10 @@ Luxury event ticketing website for the **Kakla Sane & Crew Trip 2026** to **Boti
 
 Copy `.env.example` to `.env.local` and fill values.
 
+For SMTP backend connection from the website contact form:
+
+- `NEXT_PUBLIC_CONTACT_ENDPOINT=http://localhost:5000/send-message`
+
 ## Supabase Table Setup
 
 To persist Contact form submissions in the Admin panel, run this SQL in Supabase SQL Editor:
@@ -51,6 +55,58 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+## SMTP Email Backend (Node + Express + Nodemailer)
+
+Backend lives in:
+
+`server/`
+
+Structure:
+
+- `server/index.js`
+- `server/routes/messageRoutes.js`
+- `server/controllers/messageController.js`
+- `server/.env`
+
+Run backend:
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+Backend route:
+
+- `POST /send-message`
+
+Required payload:
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "message": "Hello from contact form"
+}
+```
+
+Example frontend `fetch` usage (no page reload, async):
+
+```ts
+const response = await fetch(process.env.NEXT_PUBLIC_CONTACT_ENDPOINT || "http://localhost:5000/send-message", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name, email, message })
+});
+```
+
+SMTP uses Gmail App Password:
+
+- Host: `smtp.gmail.com`
+- Port: `465`
+- Secure: `true`
+- Env vars: `EMAIL_USER`, `EMAIL_PASS`
 
 ## Notes
 

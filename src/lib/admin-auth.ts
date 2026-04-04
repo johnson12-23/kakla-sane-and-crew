@@ -8,7 +8,7 @@ export function getAdminCookieName() {
 
 export function isValidAdminCredentials(email: string, password: string) {
   const adminEmail = process.env.ADMIN_EMAIL || "admin@kaklasanecrew.com";
-  const adminPassword = process.env.ADMIN_PASSWORD || "KaklaCrew2026!";
+  const adminPassword = process.env.ADMIN_PASSWORD || "KAKLAADMIN2026";
 
   return email === adminEmail && password === adminPassword;
 }

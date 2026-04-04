@@ -33,6 +33,70 @@ begin
   end if;
 end $$;
 
+-- Admin-managed app settings (used for slot capacity control).
+create table if not exists public.app_settings (
+  key text primary key,
+  value numeric not null,
+  updated_at timestamptz not null default now()
+);
+
+create or replace function public.touch_app_settings_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists app_settings_updated_at_trigger on public.app_settings;
+create trigger app_settings_updated_at_trigger
+before update on public.app_settings
+for each row
+execute function public.touch_app_settings_updated_at();
+
+insert into public.app_settings (key, value)
+values ('total_ticket_capacity', 120)
+on conflict (key) do nothing;
+
+alter table public.app_settings enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'app_settings'
+      and policyname = 'Allow read app settings'
+  ) then
+    create policy "Allow read app settings"
+      on public.app_settings
+      for select
+      to anon, authenticated
+      using (true);
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'app_settings'
+      and policyname = 'Allow write app settings'
+  ) then
+    create policy "Allow write app settings"
+      on public.app_settings
+      for all
+      to anon, authenticated
+      using (true)
+      with check (true);
+  end if;
+end $$;
+
 do $$
 begin
   if not exists (
