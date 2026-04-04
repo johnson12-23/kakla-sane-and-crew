@@ -50,6 +50,144 @@ const gallerySequence: Array<{ file: string; type: "image" | "video" }> = [
 
 const tones: MediaItem["tone"][] = ["gold", "emerald", "sand"];
 
+const mediaDetails: Record<string, { title: string; description: string; poster?: string }> = {
+  "image-01.jpeg": {
+    title: "Welcome Energy",
+    description: "Arrival smiles and first-linkup excitement as the crew settles in for trip day."
+  },
+  "video-01.mp4": {
+    title: "Signature Moment Reel",
+    description: "A stylish moving highlight that captures confidence, fashion, and main-character energy.",
+    poster: "/gallery/image-10.jpeg"
+  },
+  "image-02.jpeg": {
+    title: "Travel Glam Portrait",
+    description: "A polished frame showing coordinated looks and premium trip aesthetics."
+  },
+  "arrival-1.mp4": {
+    title: "Arrival Highlights",
+    description: "Short clip of early meetup moments, greetings, and first impressions.",
+    poster: "/gallery/image-01.jpeg"
+  },
+  "image-03.jpeg": {
+    title: "Crew Portrait",
+    description: "A still moment focused on team unity, heritage, and shared purpose."
+  },
+  "image-04.jpeg": {
+    title: "Golden Hour Pose",
+    description: "Warm evening light and confident styling in a clean travel editorial shot."
+  },
+  "bus-excitment.mp4": {
+    title: "Roadtrip Bus Excitement",
+    description: "On-board vibes, singalongs, and laughter while heading to the destination.",
+    poster: "/gallery/image-05.jpeg"
+  },
+  "image-05.jpeg": {
+    title: "Luxury Detail Frame",
+    description: "Premium travel details captured in a candid but intentional composition."
+  },
+  "image-06.jpeg": {
+    title: "Nature Glow",
+    description: "A scenic stop blending natural beauty with calm trip-day atmosphere."
+  },
+  "game-2.mp4": {
+    title: "Game Session Highlights",
+    description: "Fast-paced activity footage showing playful team competition and crowd energy.",
+    poster: "/gallery/games-pic.jpeg"
+  },
+  "image-07.jpeg": {
+    title: "Main Character Shot",
+    description: "Bold portrait framing that puts confidence and presence at center stage."
+  },
+  "image-08.jpeg": {
+    title: "Scenic Focus",
+    description: "A location-focused frame that showcases the destination atmosphere."
+  },
+  "video-02.mp4": {
+    title: "Crew Highlights Reel",
+    description: "Cinematic recap of movement, smiles, and social moments across the day.",
+    poster: "/gallery/image-08.jpeg"
+  },
+  "image-09.jpeg": {
+    title: "Crew Together",
+    description: "Group chemistry captured in one frame, full of friendship and trip spirit."
+  },
+  "image-10.jpeg": {
+    title: "Final Vibe Frame",
+    description: "Closing still that preserves the signature Kakla Sane and Crew mood."
+  },
+  "video-03.mp4": {
+    title: "Live Walkthrough",
+    description: "A moving walkthrough that lets viewers feel the environment in real time.",
+    poster: "/gallery/image-09.jpeg"
+  },
+  "asenema-1.jpeg": {
+    title: "Asenema View I",
+    description: "First Asenema location frame with natural texture and calm energy."
+  },
+  "asenema-2.jpeg": {
+    title: "Asenema View II",
+    description: "A second perspective from Asenema, focused on atmosphere and depth."
+  },
+  "kakla-sane-active-video.mp4": {
+    title: "Kakla Sane Active Reel",
+    description: "Dynamic clip featuring movement, hosting energy, and event momentum.",
+    poster: "/gallery/kakla-grilling-pic.jpeg"
+  },
+  "asenema-3.jpeg": {
+    title: "Asenema View III",
+    description: "An immersive Asenema shot highlighting composition and surroundings."
+  },
+  "asenema-4.jpeg": {
+    title: "Asenema View IV",
+    description: "A clean destination capture with strong travel-story visual character."
+  },
+  "asenema-5.jpeg": {
+    title: "Asenema View V",
+    description: "Final Asenema still in the set, preserving local mood and setting."
+  },
+  "fun-pic-1.jpeg": {
+    title: "Fun Moment Snapshot",
+    description: "A playful candid capturing spontaneous joy and group interaction."
+  },
+  "games-pic.jpeg": {
+    title: "Games Arena Still",
+    description: "Activity zone frame showing team play, focus, and crowd engagement."
+  },
+  "kakla-grilling-pic.jpeg": {
+    title: "Grill Session Moment",
+    description: "Food and social culture captured in a lively grilling scene."
+  },
+  "kakum-2.jpeg": {
+    title: "Kakum Canopy View II",
+    description: "A scenic Kakum moment emphasizing elevation, greenery, and adventure."
+  },
+  "kakum-pic.jpeg": {
+    title: "Kakum Canopy View I",
+    description: "Signature Kakum frame with rich forest tones and travel wonder."
+  },
+  "wli-1.jpeg": {
+    title: "Wli Falls View I",
+    description: "Opening Wli frame featuring water, terrain, and refreshing natural light."
+  },
+  "wli-2.jpeg": {
+    title: "Wli Falls View II",
+    description: "A closer Wli perspective highlighting motion and layered scenery."
+  },
+  "wli-3.jpeg": {
+    title: "Wli Falls View III",
+    description: "Balanced composition focused on the falls and surrounding environment."
+  },
+  "wli-4.jpeg": {
+    title: "Wli Falls View IV",
+    description: "A calm scenic frame from Wli that rounds out the waterfall series."
+  },
+  "wli-group-pic.jpeg": {
+    title: "Wli Group Portrait",
+    description: "Full-crew photo at Wli capturing togetherness and achievement."
+  }
+};
+
 function toLabel(fileName: string) {
   return fileName
     .replace(/\.[^/.]+$/, "")
@@ -58,15 +196,21 @@ function toLabel(fileName: string) {
     .join(" ");
 }
 
-const mediaItems: MediaItem[] = gallerySequence.map((entry, index) => ({
-  id: `media-${index + 1}`,
-  type: entry.type,
-  src: `/gallery/${entry.file}`,
-  poster: entry.type === "video" ? "/gallery/image-01.jpeg" : undefined,
-  title: toLabel(entry.file),
-  description: entry.type === "video" ? "Trip video highlight from Kakla Sane & Crew." : "Trip photo moment from Kakla Sane & Crew.",
-  tone: tones[index % tones.length]
-}));
+const mediaItems: MediaItem[] = gallerySequence.map((entry, index) => {
+  const details = mediaDetails[entry.file];
+
+  return {
+    id: `media-${index + 1}`,
+    type: entry.type,
+    src: `/gallery/${entry.file}`,
+    poster: entry.type === "video" ? details?.poster || "/gallery/image-01.jpeg" : undefined,
+    title: details?.title || toLabel(entry.file),
+    description:
+      details?.description ||
+      (entry.type === "video" ? "Trip video highlight from Kakla Sane & Crew." : "Trip photo moment from Kakla Sane & Crew."),
+    tone: tones[index % tones.length]
+  };
+});
 
 type FilterMode = "all" | "image" | "video";
 
