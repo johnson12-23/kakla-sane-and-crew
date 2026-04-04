@@ -13,115 +13,60 @@ type MediaItem = {
   tone: "emerald" | "gold" | "sand";
 };
 
-const mediaItems: MediaItem[] = [
-  {
-    id: "image-01",
-    type: "image",
-    src: "/gallery/image-01.jpeg",
-    title: "Welcome Energy",
-    description: "The first arrival moments with smiles, hugs, and trip-day excitement.",
-    tone: "gold"
-  },
-  {
-    id: "video-01",
-    type: "video",
-    src: "/gallery/video-03.mp4",
-    poster: "/gallery/image-08.jpeg",
-    title: "Live Walkthrough",
-    description: "A moving look at the location ambience as the experience unfolds live.",
-    tone: "emerald"
-  },
-  {
-    id: "image-02",
-    type: "image",
-    src: "/gallery/image-02.jpeg",
-    title: "Travel Glam",
-    description: "Styled group portraits that set the premium tone for the entire journey.",
-    tone: "emerald"
-  },
-  {
-    id: "image-03",
-    type: "image",
-    src: "/gallery/image-03.jpeg",
-    title: "Crew Portrait",
-    description: "A reflective stop honoring the paths our forefathers endured through slavery and resilience.",
-    tone: "sand"
-  },
-  {
-    id: "video-02",
-    type: "video",
-    src: "/gallery/video-02.mp4",
-    poster: "/gallery/image-08.jpeg",
-    title: "Crew Highlights",
-    description: "Short cinematic highlights of movement, laughter, and shared moments.",
-    tone: "gold"
-  },
-  {
-    id: "image-04",
-    type: "image",
-    src: "/gallery/image-04.jpeg",
-    title: "Golden Hour Pose",
-    description: "Soft evening light and coordinated outfits creating a postcard-perfect view.",
-    tone: "gold"
-  },
-  {
-    id: "image-05",
-    type: "image",
-    src: "/gallery/image-05.jpeg",
-    title: "Luxury Moments",
-    description: "Premium travel details captured with elegant, candid confidence.",
-    tone: "emerald"
-  },
-  {
-    id: "final-vibe",
-    type: "image",
-    src: "/gallery/image-10.jpeg",
-    title: "Final Vibe Reel",
-    description: "Closing style frame that captures the signature energy of the trip.",
-    tone: "sand"
-  },
-  {
-    id: "image-06",
-    type: "image",
-    src: "/gallery/image-07.jpeg",
-    title: "Nature Glow",
-    description: "Visit to a heritage site, where history and identity meet in one powerful moment.",
-    tone: "sand"
-  },
-  {
-    id: "image-07",
-    type: "image",
-    src: "/gallery/image-02.jpeg",
-    title: "Main Character Shot",
-    description: "A hero-style still that highlights confidence and travel elegance.",
-    tone: "gold"
-  },
-  {
-    id: "image-08",
-    type: "image",
-    src: "/gallery/image-09.jpeg",
-    title: "Crew Together",
-    description: "Group chemistry in one frame, full of laughter and memorable vibes.",
-    tone: "emerald"
-  },
-  {
-    id: "image-09",
-    type: "image",
-    src: "/gallery/image-08.jpeg",
-    title: "Scenic Focus",
-    description: "An immersive scene showing the rich atmosphere of the destination.",
-    tone: "sand"
-  },
-  {
-    id: "signature-look",
-    type: "video",
-    src: "/gallery/video-01.mp4",
-    poster: "/gallery/image-10.jpeg",
-    title: "Signature Look",
-    description: "A moving signature moment with confidence, style, and premium trip vibes.",
-    tone: "gold"
-  }
+const gallerySequence: Array<{ file: string; type: "image" | "video" }> = [
+  { file: "image-01.jpeg", type: "image" },
+  { file: "video-01.mp4", type: "video" },
+  { file: "image-02.jpeg", type: "image" },
+  { file: "arrival-1.mp4", type: "video" },
+  { file: "image-03.jpeg", type: "image" },
+  { file: "image-04.jpeg", type: "image" },
+  { file: "bus-excitment.mp4", type: "video" },
+  { file: "image-05.jpeg", type: "image" },
+  { file: "image-06.jpeg", type: "image" },
+  { file: "game-2.mp4", type: "video" },
+  { file: "image-07.jpeg", type: "image" },
+  { file: "image-08.jpeg", type: "image" },
+  { file: "video-02.mp4", type: "video" },
+  { file: "image-09.jpeg", type: "image" },
+  { file: "image-10.jpeg", type: "image" },
+  { file: "video-03.mp4", type: "video" },
+  { file: "asenema-1.jpeg", type: "image" },
+  { file: "asenema-2.jpeg", type: "image" },
+  { file: "kakla-sane-active-video.mp4", type: "video" },
+  { file: "asenema-3.jpeg", type: "image" },
+  { file: "asenema-4.jpeg", type: "image" },
+  { file: "asenema-5.jpeg", type: "image" },
+  { file: "fun-pic-1.jpeg", type: "image" },
+  { file: "games-pic.jpeg", type: "image" },
+  { file: "kakla-grilling-pic.jpeg", type: "image" },
+  { file: "kakum-2.jpeg", type: "image" },
+  { file: "kakum-pic.jpeg", type: "image" },
+  { file: "wli-1.jpeg", type: "image" },
+  { file: "wli-2.jpeg", type: "image" },
+  { file: "wli-3.jpeg", type: "image" },
+  { file: "wli-4.jpeg", type: "image" },
+  { file: "wli-group-pic.jpeg", type: "image" }
 ];
+
+const tones: MediaItem["tone"][] = ["gold", "emerald", "sand"];
+
+function toLabel(fileName: string) {
+  return fileName
+    .replace(/\.[^/.]+$/, "")
+    .split("-")
+    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : part))
+    .join(" ");
+}
+
+const mediaItems: MediaItem[] = gallerySequence.map((entry, index) => ({
+  id: `media-${index + 1}`,
+  type: entry.type,
+  src: `/gallery/${entry.file}`,
+  poster: entry.type === "video" ? "/gallery/image-01.jpeg" : undefined,
+  title: toLabel(entry.file),
+  description: entry.type === "video" ? "Trip video highlight from Kakla Sane & Crew." : "Trip photo moment from Kakla Sane & Crew.",
+  tone: tones[index % tones.length]
+}));
 
 type FilterMode = "all" | "image" | "video";
 
